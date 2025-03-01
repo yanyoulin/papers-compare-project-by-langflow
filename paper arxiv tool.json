@@ -1,0 +1,1532 @@
+{
+  "name": "paper arxiv tool",
+  "webhook": false,
+  "description": "Connect the Dots, Craft Language.",
+  "icon_bg_color": null,
+  "endpoint_name": null,
+  "id": "aa0f4e0e-0f5e-4ea1-966f-92cc2863ac90",
+  "user_id": "196b1a1d-d7a5-484f-878b-d8a0aeb0064b",
+  "tags": null,
+  "gradient": null,
+  "locked": false,
+  "folder_id": "361df89b-1524-4f5c-9556-d567ec7edf0d",
+  "is_component": false,
+  "data": {
+    "nodes": [
+      {
+        "id": "ChatInput-KIQmd",
+        "type": "genericNode",
+        "position": {
+          "x": 30,
+          "y": 210
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "files": {
+                "trace_as_metadata": true,
+                "file_path": "",
+                "fileTypes": [
+                  "txt",
+                  "md",
+                  "mdx",
+                  "csv",
+                  "json",
+                  "yaml",
+                  "yml",
+                  "xml",
+                  "html",
+                  "htm",
+                  "pdf",
+                  "docx",
+                  "py",
+                  "sh",
+                  "sql",
+                  "js",
+                  "ts",
+                  "tsx",
+                  "jpg",
+                  "jpeg",
+                  "png",
+                  "bmp",
+                  "image"
+                ],
+                "list": true,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "files",
+                "value": "",
+                "display_name": "Files",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Files to be sent with the message.",
+                "title_case": false,
+                "type": "file",
+                "_input_type": "FileInput"
+              },
+              "background_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "background_color",
+                "value": "",
+                "display_name": "Background Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The background color of the icon.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "chat_icon": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "chat_icon",
+                "value": "",
+                "display_name": "Icon",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The icon of the message.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.data.utils import IMG_FILE_TYPES, TEXT_FILE_TYPES\nfrom langflow.base.io.chat import ChatComponent\nfrom langflow.inputs import BoolInput\nfrom langflow.io import (\n    DropdownInput,\n    FileInput,\n    MessageTextInput,\n    MultilineInput,\n    Output,\n)\nfrom langflow.schema.message import Message\nfrom langflow.utils.constants import (\n    MESSAGE_SENDER_AI,\n    MESSAGE_SENDER_NAME_USER,\n    MESSAGE_SENDER_USER,\n)\n\n\nclass ChatInput(ChatComponent):\n    display_name = \"Chat Input\"\n    description = \"Get chat inputs from the Playground.\"\n    icon = \"MessagesSquare\"\n    name = \"ChatInput\"\n    minimized = True\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            value=\"\",\n            info=\"Message to be passed as input.\",\n            input_types=[],\n        ),\n        BoolInput(\n            name=\"should_store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[MESSAGE_SENDER_AI, MESSAGE_SENDER_USER],\n            value=MESSAGE_SENDER_USER,\n            info=\"Type of sender.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=MESSAGE_SENDER_NAME_USER,\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            advanced=True,\n        ),\n        FileInput(\n            name=\"files\",\n            display_name=\"Files\",\n            file_types=TEXT_FILE_TYPES + IMG_FILE_TYPES,\n            info=\"Files to be sent with the message.\",\n            advanced=True,\n            is_list=True,\n        ),\n        MessageTextInput(\n            name=\"background_color\",\n            display_name=\"Background Color\",\n            info=\"The background color of the icon.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"chat_icon\",\n            display_name=\"Icon\",\n            info=\"The icon of the message.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"text_color\",\n            display_name=\"Text Color\",\n            info=\"The text color of the name\",\n            advanced=True,\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    async def message_response(self) -> Message:\n        background_color = self.background_color\n        text_color = self.text_color\n        icon = self.chat_icon\n\n        message = await Message.create(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n            files=self.files,\n            properties={\n                \"background_color\": background_color,\n                \"text_color\": text_color,\n                \"icon\": icon,\n            },\n        )\n        if self.session_id and isinstance(message, Message) and self.should_store_message:\n            stored_message = await self.send_message(\n                message,\n            )\n            self.message.value = stored_message\n            message = stored_message\n\n        self.status = message\n        return message\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "Article [AI], Date[from 2014-05 to 2024-05], Do [What can AI do mentioned in different articles]",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [],
+                "dynamic": false,
+                "info": "Message to be passed as input.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              },
+              "sender": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "Machine",
+                  "User"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender",
+                "value": "User",
+                "display_name": "Sender Type",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Type of sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "sender_name": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender_name",
+                "value": "User",
+                "display_name": "Sender Name",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Name of the sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "session_id": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "session_id",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "should_store_message": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "should_store_message",
+                "value": true,
+                "display_name": "Store Messages",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Store the message in the history.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "text_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "text_color",
+                "value": "",
+                "display_name": "Text Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The text color of the name",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Get chat inputs from the Playground.",
+            "icon": "MessagesSquare",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Chat Input",
+            "documentation": "",
+            "minimized": true,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "message",
+                "display_name": "Message",
+                "method": "message_response",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "input_value",
+              "should_store_message",
+              "sender",
+              "sender_name",
+              "session_id",
+              "files",
+              "background_color",
+              "chat_icon",
+              "text_color"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": false,
+          "type": "ChatInput",
+          "id": "ChatInput-KIQmd"
+        },
+        "selected": false,
+        "measured": {
+          "width": 192,
+          "height": 66
+        }
+      },
+      {
+        "id": "CustomComponent-dDk1k",
+        "type": "genericNode",
+        "position": {
+          "x": 384.7961574562047,
+          "y": -24.728168588772036
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "# from langflow.field_typing import Data\nfrom langflow.custom import Component\nfrom langflow.io import MessageTextInput, Output\nfrom langflow.schema import Data\nimport re\nfrom langflow.schema.message import Message\n\n\nclass CustomComponent(Component):\n    display_name = \"Extract Article Component\"\n    description = \"Extracts content within 'Article' brackets from a given string.\"\n    documentation: str = \"http://docs.langflow.org/components/custom\"\n    icon = \"custom_components\"\n    name = \"ExtractArticleComponent\"\n\n    # 定義元件的輸入\n    inputs = [\n        MessageTextInput(name=\"input_value\", display_name=\"Input Value\", value=\"Article [AI], Date[from 2014-05 to 2024-05], Do [What can AI do mentioned in different articles]\"),\n    ]\n\n    # 定義元件的輸出\n    outputs = [\n        Output(display_name=\"Extracted Article\", name=\"output\", method=\"build_output\"),\n    ]\n\n    def build_output(self) -> Message:\n        # 提取 input_value 的內容\n        input_text = self.input_value\n        match = re.search(r\"Article \\[(.*?)\\]\", input_text)  # 匹配 \"Article [ ]\"\n        if match:\n            extracted_content = match.group(1)  # 提取括號內的內容\n        else:\n            extracted_content = \"Not Found\"\n\n        # 包裝為 Data 格式返回\n        data = Message(text=extracted_content)\n        self.status = data  # 更新元件狀態\n        return data\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "",
+                "display_name": "Input Value",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Extracts content within 'Article' brackets from a given string.",
+            "icon": "custom_components",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Extract Article Component",
+            "documentation": "http://docs.langflow.org/components/custom",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "output",
+                "hidden": null,
+                "display_name": "Extracted Article",
+                "method": "build_output",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "input_value"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": true,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "ExtractArticleComponent",
+          "id": "CustomComponent-dDk1k"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 249
+        },
+        "dragging": false
+      },
+      {
+        "id": "ArXivComponent-w5alp",
+        "type": "genericNode",
+        "position": {
+          "x": 855,
+          "y": 0
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import urllib.request\nfrom urllib.parse import urlparse\nfrom xml.etree.ElementTree import Element\n\nfrom defusedxml.ElementTree import fromstring\n\nfrom langflow.custom import Component\nfrom langflow.io import DropdownInput, IntInput, MessageTextInput, Output\nfrom langflow.schema import Data\n\n\nclass ArXivComponent(Component):\n    display_name = \"arXiv\"\n    description = \"Search and retrieve papers from arXiv.org\"\n    icon = \"arXiv\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"search_query\",\n            display_name=\"Search Query\",\n            info=\"The search query for arXiv papers (e.g., 'quantum computing')\",\n            tool_mode=True,\n        ),\n        DropdownInput(\n            name=\"search_type\",\n            display_name=\"Search Field\",\n            info=\"The field to search in\",\n            options=[\"all\", \"title\", \"abstract\", \"author\", \"cat\"],  # cat is for category\n            value=\"all\",\n        ),\n        IntInput(\n            name=\"max_results\",\n            display_name=\"Max Results\",\n            info=\"Maximum number of results to return\",\n            value=10,\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Papers\", name=\"papers\", method=\"search_papers\"),\n    ]\n\n    def build_query_url(self) -> str:\n        \"\"\"Build the arXiv API query URL.\"\"\"\n        base_url = \"http://export.arxiv.org/api/query?\"\n\n        # Build the search query\n        search_query = f\"{self.search_type}:{self.search_query}\"\n\n        # URL parameters\n        params = {\n            \"search_query\": search_query,\n            \"max_results\": str(self.max_results),\n        }\n\n        # Convert params to URL query string\n        query_string = \"&\".join([f\"{k}={urllib.parse.quote(str(v))}\" for k, v in params.items()])\n\n        return base_url + query_string\n\n    def parse_atom_response(self, response_text: str) -> list[dict]:\n        \"\"\"Parse the Atom XML response from arXiv.\"\"\"\n        # Parse XML safely using defusedxml\n        root = fromstring(response_text)\n\n        # Define namespace dictionary for XML parsing\n        ns = {\"atom\": \"http://www.w3.org/2005/Atom\", \"arxiv\": \"http://arxiv.org/schemas/atom\"}\n\n        papers = []\n        # Process each entry (paper)\n        for entry in root.findall(\"atom:entry\", ns):\n            paper = {\n                \"id\": self._get_text(entry, \"atom:id\", ns),\n                \"title\": self._get_text(entry, \"atom:title\", ns),\n                \"summary\": self._get_text(entry, \"atom:summary\", ns),\n                \"published\": self._get_text(entry, \"atom:published\", ns),\n                \"updated\": self._get_text(entry, \"atom:updated\", ns),\n                \"authors\": [author.find(\"atom:name\", ns).text for author in entry.findall(\"atom:author\", ns)],\n                \"arxiv_url\": self._get_link(entry, \"alternate\", ns),\n                \"pdf_url\": self._get_link(entry, \"related\", ns),\n                \"comment\": self._get_text(entry, \"arxiv:comment\", ns),\n                \"journal_ref\": self._get_text(entry, \"arxiv:journal_ref\", ns),\n                \"primary_category\": self._get_category(entry, ns),\n                \"categories\": [cat.get(\"term\") for cat in entry.findall(\"atom:category\", ns)],\n            }\n            papers.append(paper)\n\n        return papers\n\n    def _get_text(self, element: Element, path: str, ns: dict) -> str | None:\n        \"\"\"Safely extract text from an XML element.\"\"\"\n        el = element.find(path, ns)\n        return el.text.strip() if el is not None and el.text else None\n\n    def _get_link(self, element: Element, rel: str, ns: dict) -> str | None:\n        \"\"\"Get link URL based on relation type.\"\"\"\n        for link in element.findall(\"atom:link\", ns):\n            if link.get(\"rel\") == rel:\n                return link.get(\"href\")\n        return None\n\n    def _get_category(self, element: Element, ns: dict) -> str | None:\n        \"\"\"Get primary category.\"\"\"\n        cat = element.find(\"arxiv:primary_category\", ns)\n        return cat.get(\"term\") if cat is not None else None\n\n    def search_papers(self) -> list[Data]:\n        \"\"\"Search arXiv and return results.\"\"\"\n        try:\n            # Build the query URL\n            url = self.build_query_url()\n\n            # Validate URL scheme and host\n            parsed_url = urlparse(url)\n            if parsed_url.scheme not in (\"http\", \"https\"):\n                error_msg = f\"Invalid URL scheme: {parsed_url.scheme}\"\n                raise ValueError(error_msg)\n            if parsed_url.hostname != \"export.arxiv.org\":\n                error_msg = f\"Invalid host: {parsed_url.hostname}\"\n                raise ValueError(error_msg)\n\n            # Create a custom opener that only allows http/https schemes\n            class RestrictedHTTPHandler(urllib.request.HTTPHandler):\n                def http_open(self, req):\n                    return super().http_open(req)\n\n            class RestrictedHTTPSHandler(urllib.request.HTTPSHandler):\n                def https_open(self, req):\n                    return super().https_open(req)\n\n            # Build opener with restricted handlers\n            opener = urllib.request.build_opener(RestrictedHTTPHandler, RestrictedHTTPSHandler)\n            urllib.request.install_opener(opener)\n\n            # Make the request with validated URL using restricted opener\n            response = opener.open(url)\n            response_text = response.read().decode(\"utf-8\")\n\n            # Parse the response\n            papers = self.parse_atom_response(response_text)\n\n            # Convert to Data objects\n            results = [Data(data=paper) for paper in papers]\n            self.status = results\n        except (urllib.error.URLError, ValueError) as e:\n            error_data = Data(data={\"error\": f\"Request error: {e!s}\"})\n            self.status = error_data\n            return [error_data]\n        else:\n            return results\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "max_results": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "max_results",
+                "value": 10,
+                "display_name": "Max Results",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Maximum number of results to return",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "search_query": {
+                "tool_mode": true,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "search_query",
+                "value": "",
+                "display_name": "Search Query",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The search query for arXiv papers (e.g., 'quantum computing')",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "search_type": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "all",
+                  "title",
+                  "abstract",
+                  "author",
+                  "cat"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "search_type",
+                "value": "all",
+                "display_name": "Search Field",
+                "advanced": false,
+                "dynamic": false,
+                "info": "The field to search in",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              }
+            },
+            "description": "Search and retrieve papers from arXiv.org",
+            "icon": "arXiv",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "arXiv",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "papers",
+                "display_name": "Papers",
+                "method": "search_papers",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "search_query",
+              "search_type",
+              "max_results"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "ArXivComponent",
+          "id": "ArXivComponent-w5alp"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 394
+        }
+      },
+      {
+        "id": "DataFrameOperationsComponent-n8cp7",
+        "type": "genericNode",
+        "position": {
+          "x": 1652.2816858877209,
+          "y": 104.0614605692713
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "df": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "df",
+                "value": "",
+                "display_name": "DataFrame",
+                "advanced": false,
+                "input_types": [
+                  "DataFrame"
+                ],
+                "dynamic": false,
+                "info": "The input DataFrame to operate on.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataFrameInput"
+              },
+              "ascending": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "ascending",
+                "value": true,
+                "display_name": "Sort Ascending",
+                "advanced": false,
+                "dynamic": true,
+                "info": "Whether to sort in ascending order.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.custom import Component\nfrom langflow.io import BoolInput, DataFrameInput, DropdownInput, IntInput, MessageTextInput, Output, StrInput\nfrom langflow.schema import DataFrame\n\n\nclass DataFrameOperationsComponent(Component):\n    display_name = \"DataFrame Operations\"\n    description = \"Perform various operations on a DataFrame.\"\n    icon = \"table\"\n\n    # Available operations\n    OPERATION_CHOICES = [\n        \"Add Column\",\n        \"Drop Column\",\n        \"Filter\",\n        \"Head\",\n        \"Rename Column\",\n        \"Replace Value\",\n        \"Select Columns\",\n        \"Sort\",\n        \"Tail\",\n    ]\n\n    inputs = [\n        DataFrameInput(\n            name=\"df\",\n            display_name=\"DataFrame\",\n            info=\"The input DataFrame to operate on.\",\n        ),\n        DropdownInput(\n            name=\"operation\",\n            display_name=\"Operation\",\n            options=OPERATION_CHOICES,\n            info=\"Select the DataFrame operation to perform.\",\n            real_time_refresh=True,\n        ),\n        StrInput(\n            name=\"column_name\",\n            display_name=\"Column Name\",\n            info=\"The column name to use for the operation.\",\n            dynamic=True,\n            show=False,\n        ),\n        MessageTextInput(\n            name=\"filter_value\",\n            display_name=\"Filter Value\",\n            info=\"The value to filter rows by.\",\n            dynamic=True,\n            show=False,\n        ),\n        BoolInput(\n            name=\"ascending\",\n            display_name=\"Sort Ascending\",\n            info=\"Whether to sort in ascending order.\",\n            dynamic=True,\n            show=False,\n            value=True,\n        ),\n        StrInput(\n            name=\"new_column_name\",\n            display_name=\"New Column Name\",\n            info=\"The new column name when renaming or adding a column.\",\n            dynamic=True,\n            show=False,\n        ),\n        MessageTextInput(\n            name=\"new_column_value\",\n            display_name=\"New Column Value\",\n            info=\"The value to populate the new column with.\",\n            dynamic=True,\n            show=False,\n        ),\n        StrInput(\n            name=\"columns_to_select\",\n            display_name=\"Columns to Select\",\n            dynamic=True,\n            is_list=True,\n            show=False,\n        ),\n        IntInput(\n            name=\"num_rows\",\n            display_name=\"Number of Rows\",\n            info=\"Number of rows to return (for head/tail).\",\n            dynamic=True,\n            show=False,\n            value=5,\n        ),\n        MessageTextInput(\n            name=\"replace_value\",\n            display_name=\"Value to Replace\",\n            info=\"The value to replace in the column.\",\n            dynamic=True,\n            show=False,\n        ),\n        MessageTextInput(\n            name=\"replacement_value\",\n            display_name=\"Replacement Value\",\n            info=\"The value to replace with.\",\n            dynamic=True,\n            show=False,\n        ),\n    ]\n\n    outputs = [\n        Output(\n            display_name=\"DataFrame\",\n            name=\"output\",\n            method=\"perform_operation\",\n            info=\"The resulting DataFrame after the operation.\",\n        )\n    ]\n\n    def update_build_config(self, build_config, field_value, field_name=None):\n        # Hide all dynamic fields by default\n        dynamic_fields = [\n            \"column_name\",\n            \"filter_value\",\n            \"ascending\",\n            \"new_column_name\",\n            \"new_column_value\",\n            \"columns_to_select\",\n            \"num_rows\",\n            \"replace_value\",\n            \"replacement_value\",\n        ]\n        for field in dynamic_fields:\n            build_config[field][\"show\"] = False\n\n        # Show relevant fields based on the selected operation\n        if field_name == \"operation\":\n            if field_value == \"Filter\":\n                build_config[\"column_name\"][\"show\"] = True\n                build_config[\"filter_value\"][\"show\"] = True\n            elif field_value == \"Sort\":\n                build_config[\"column_name\"][\"show\"] = True\n                build_config[\"ascending\"][\"show\"] = True\n            elif field_value == \"Drop Column\":\n                build_config[\"column_name\"][\"show\"] = True\n            elif field_value == \"Rename Column\":\n                build_config[\"column_name\"][\"show\"] = True\n                build_config[\"new_column_name\"][\"show\"] = True\n            elif field_value == \"Add Column\":\n                build_config[\"new_column_name\"][\"show\"] = True\n                build_config[\"new_column_value\"][\"show\"] = True\n            elif field_value == \"Select Columns\":\n                build_config[\"columns_to_select\"][\"show\"] = True\n            elif field_value in {\"Head\", \"Tail\"}:\n                build_config[\"num_rows\"][\"show\"] = True\n            elif field_value == \"Replace Value\":\n                build_config[\"column_name\"][\"show\"] = True\n                build_config[\"replace_value\"][\"show\"] = True\n                build_config[\"replacement_value\"][\"show\"] = True\n\n        return build_config\n\n    def perform_operation(self) -> DataFrame:\n        dataframe_copy = self.df.copy()\n        operation = self.operation\n\n        if operation == \"Filter\":\n            return self.filter_rows_by_value(dataframe_copy)\n        if operation == \"Sort\":\n            return self.sort_by_column(dataframe_copy)\n        if operation == \"Drop Column\":\n            return self.drop_column(dataframe_copy)\n        if operation == \"Rename Column\":\n            return self.rename_column(dataframe_copy)\n        if operation == \"Add Column\":\n            return self.add_column(dataframe_copy)\n        if operation == \"Select Columns\":\n            return self.select_columns(dataframe_copy)\n        if operation == \"Head\":\n            return self.head(dataframe_copy)\n        if operation == \"Tail\":\n            return self.tail(dataframe_copy)\n        if operation == \"Replace Value\":\n            return self.replace_values(dataframe_copy)\n        msg = f\"Unsupported operation: {operation}\"\n\n        raise ValueError(msg)\n\n    # Existing methods\n    def filter_rows_by_value(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df[df[self.column_name] == self.filter_value])\n\n    def sort_by_column(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df.sort_values(by=self.column_name, ascending=self.ascending))\n\n    def drop_column(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df.drop(columns=[self.column_name]))\n\n    def rename_column(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df.rename(columns={self.column_name: self.new_column_name}))\n\n    def add_column(self, df: DataFrame) -> DataFrame:\n        df[self.new_column_name] = [self.new_column_value] * len(df)\n        return DataFrame(df)\n\n    def select_columns(self, df: DataFrame) -> DataFrame:\n        columns = [col.strip() for col in self.columns_to_select]\n        return DataFrame(df[columns])\n\n    # New methods\n    def head(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df.head(self.num_rows))\n\n    def tail(self, df: DataFrame) -> DataFrame:\n        return DataFrame(df.tail(self.num_rows))\n\n    def replace_values(self, df: DataFrame) -> DataFrame:\n        df[self.column_name] = df[self.column_name].replace(self.replace_value, self.replacement_value)\n        return DataFrame(df)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "column_name": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "column_name",
+                "value": "",
+                "display_name": "Column Name",
+                "advanced": false,
+                "dynamic": true,
+                "info": "The column name to use for the operation.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "columns_to_select": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": true,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "columns_to_select",
+                "value": [
+                  "pdf_url"
+                ],
+                "display_name": "Columns to Select",
+                "advanced": false,
+                "dynamic": true,
+                "info": "",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "filter_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "filter_value",
+                "value": "",
+                "display_name": "Filter Value",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": true,
+                "info": "The value to filter rows by.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "new_column_name": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "new_column_name",
+                "value": "",
+                "display_name": "New Column Name",
+                "advanced": false,
+                "dynamic": true,
+                "info": "The new column name when renaming or adding a column.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "new_column_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "new_column_value",
+                "value": "",
+                "display_name": "New Column Value",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": true,
+                "info": "The value to populate the new column with.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "num_rows": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "num_rows",
+                "value": 5,
+                "display_name": "Number of Rows",
+                "advanced": false,
+                "dynamic": true,
+                "info": "Number of rows to return (for head/tail).",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "operation": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "Add Column",
+                  "Drop Column",
+                  "Filter",
+                  "Head",
+                  "Rename Column",
+                  "Replace Value",
+                  "Select Columns",
+                  "Sort",
+                  "Tail"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "operation",
+                "value": "Select Columns",
+                "display_name": "Operation",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Select the DataFrame operation to perform.",
+                "real_time_refresh": true,
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "replace_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "replace_value",
+                "value": "",
+                "display_name": "Value to Replace",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": true,
+                "info": "The value to replace in the column.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "replacement_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "replacement_value",
+                "value": "",
+                "display_name": "Replacement Value",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": true,
+                "info": "The value to replace with.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Perform various operations on a DataFrame.",
+            "icon": "table",
+            "base_classes": [
+              "DataFrame"
+            ],
+            "display_name": "DataFrame Operations",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "DataFrame"
+                ],
+                "selected": "DataFrame",
+                "name": "output",
+                "hidden": null,
+                "display_name": "DataFrame",
+                "method": "perform_operation",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "df",
+              "operation",
+              "column_name",
+              "filter_value",
+              "ascending",
+              "new_column_name",
+              "new_column_value",
+              "columns_to_select",
+              "num_rows",
+              "replace_value",
+              "replacement_value"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "DataFrameOperationsComponent",
+          "id": "DataFrameOperationsComponent-n8cp7"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 364
+        },
+        "dragging": false
+      },
+      {
+        "id": "MergeDataComponent-sDBaG",
+        "type": "genericNode",
+        "position": {
+          "x": 1254.3754157722915,
+          "y": 95.61793187104492
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "data_inputs": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": true,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "data_inputs",
+                "value": "",
+                "display_name": "Data Inputs",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "Data to combine",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from enum import Enum\nfrom typing import cast\n\nfrom loguru import logger\n\nfrom langflow.custom import Component\nfrom langflow.io import DataInput, DropdownInput, Output\nfrom langflow.schema import DataFrame\n\n\nclass DataOperation(str, Enum):\n    CONCATENATE = \"Concatenate\"\n    APPEND = \"Append\"\n    MERGE = \"Merge\"\n    JOIN = \"Join\"\n\n\nclass MergeDataComponent(Component):\n    display_name = \"Data Combiner\"\n    description = \"Combines data using different operations\"\n    icon = \"merge\"\n    MIN_INPUTS_REQUIRED = 2\n\n    inputs = [\n        DataInput(name=\"data_inputs\", display_name=\"Data Inputs\", info=\"Data to combine\", is_list=True, required=True),\n        DropdownInput(\n            name=\"operation\",\n            display_name=\"Operation Type\",\n            options=[op.value for op in DataOperation],\n            value=DataOperation.CONCATENATE.value,\n        ),\n    ]\n    outputs = [Output(display_name=\"DataFrame\", name=\"combined_data\", method=\"combine_data\")]\n\n    def combine_data(self) -> DataFrame:\n        if not self.data_inputs or len(self.data_inputs) < self.MIN_INPUTS_REQUIRED:\n            empty_dataframe = DataFrame()\n            self.status = empty_dataframe\n            return empty_dataframe\n\n        operation = DataOperation(self.operation)\n        try:\n            combined_dataframe = self._process_operation(operation)\n            self.status = combined_dataframe\n        except Exception as e:\n            logger.error(f\"Error during operation {operation}: {e!s}\")\n            raise\n        else:\n            return combined_dataframe\n\n    def _process_operation(self, operation: DataOperation) -> DataFrame:\n        if operation == DataOperation.CONCATENATE:\n            combined_data: dict[str, str | object] = {}\n            for data_input in self.data_inputs:\n                for key, value in data_input.data.items():\n                    if key in combined_data:\n                        if isinstance(combined_data[key], str) and isinstance(value, str):\n                            combined_data[key] = f\"{combined_data[key]}\\n{value}\"\n                        else:\n                            combined_data[key] = value\n                    else:\n                        combined_data[key] = value\n            return DataFrame([combined_data])\n\n        if operation == DataOperation.APPEND:\n            rows = [data_input.data for data_input in self.data_inputs]\n            return DataFrame(rows)\n\n        if operation == DataOperation.MERGE:\n            result_data: dict[str, str | list[str] | object] = {}\n            for data_input in self.data_inputs:\n                for key, value in data_input.data.items():\n                    if key in result_data and isinstance(value, str):\n                        if isinstance(result_data[key], list):\n                            cast(\"list[str]\", result_data[key]).append(value)\n                        else:\n                            result_data[key] = [result_data[key], value]\n                    else:\n                        result_data[key] = value\n            return DataFrame([result_data])\n\n        if operation == DataOperation.JOIN:\n            combined_data = {}\n            for idx, data_input in enumerate(self.data_inputs, 1):\n                for key, value in data_input.data.items():\n                    new_key = f\"{key}_doc{idx}\" if idx > 1 else key\n                    combined_data[new_key] = value\n            return DataFrame([combined_data])\n\n        return DataFrame()\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "operation": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "Concatenate",
+                  "Append",
+                  "Merge",
+                  "Join"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "operation",
+                "value": "Append",
+                "display_name": "Operation Type",
+                "advanced": false,
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              }
+            },
+            "description": "Combines data using different operations",
+            "icon": "merge",
+            "base_classes": [
+              "DataFrame"
+            ],
+            "display_name": "Data Combiner",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "DataFrame"
+                ],
+                "selected": "DataFrame",
+                "name": "combined_data",
+                "display_name": "DataFrame",
+                "method": "combine_data",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "data_inputs",
+              "operation"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "MergeDataComponent",
+          "id": "MergeDataComponent-sDBaG"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 274
+        },
+        "dragging": false
+      },
+      {
+        "id": "CustomComponent-2bk3o",
+        "type": "genericNode",
+        "position": {
+          "x": 1425.631484701377,
+          "y": 695.226753616611
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "# from langflow.field_typing import Data\nfrom langflow.custom import Component\nfrom langflow.io import MessageTextInput, Output\nfrom langflow.schema import Data\nfrom bs4 import BeautifulSoup\n\nfrom selenium.webdriver.common.by import By\nfrom selenium.webdriver.support.ui import WebDriverWait\nfrom selenium.webdriver.chrome.service import Service\nfrom selenium.webdriver.common.keys import Keys\nimport time\nimport requests\nimport fitz\nimport re\n\nclass OpenURLsComponent(Component):\n    display_name = \"Open URLs\"\n    description = \"Opens each URL from a provided list.\"\n    icon = \"link\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"urls\",\n            display_name=\"URLs\",\n            info=\"A comma-separated list of URLs.\",\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Status\", name=\"status\", method=\"open_urls\"),\n    ]\n\n    def open_urls(self) -> Data:\n        browser = webdriver.Firefox()\n        urls = self.urls.split(\"\\n\")  # 解析成列表\n        for url in urls:\n            browser.get(url.strip())  # 打開網址\n        return Data(data={\"status\": \"URLs opened successfully!\"})\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "urls": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "urls",
+                "value": "",
+                "display_name": "URLs",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "A comma-separated list of URLs.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Opens each URL from a provided list.",
+            "icon": "link",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Open URLs",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "status",
+                "hidden": null,
+                "display_name": "Status",
+                "method": "open_urls",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "urls"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": true,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "OpenURLsComponent",
+          "id": "CustomComponent-2bk3o"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 229
+        },
+        "dragging": false
+      },
+      {
+        "id": "ParseDataFrame-TAkrR",
+        "type": "genericNode",
+        "position": {
+          "x": 649.145460035851,
+          "y": 402.2394380374263
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "df": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "df",
+                "value": "",
+                "display_name": "DataFrame",
+                "advanced": false,
+                "input_types": [
+                  "DataFrame"
+                ],
+                "dynamic": false,
+                "info": "The DataFrame to convert to text rows.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataFrameInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.custom import Component\nfrom langflow.io import DataFrameInput, MultilineInput, Output, StrInput\nfrom langflow.schema.message import Message\n\n\nclass ParseDataFrameComponent(Component):\n    display_name = \"Parse DataFrame\"\n    description = (\n        \"Convert a DataFrame into plain text following a specified template. \"\n        \"Each column in the DataFrame is treated as a possible template key, e.g. {col_name}.\"\n    )\n    icon = \"braces\"\n    name = \"ParseDataFrame\"\n\n    inputs = [\n        DataFrameInput(name=\"df\", display_name=\"DataFrame\", info=\"The DataFrame to convert to text rows.\"),\n        MultilineInput(\n            name=\"template\",\n            display_name=\"Template\",\n            info=(\n                \"The template for formatting each row. \"\n                \"Use placeholders matching column names in the DataFrame, for example '{col1}', '{col2}'.\"\n            ),\n            value=\"{text}\",\n        ),\n        StrInput(\n            name=\"sep\",\n            display_name=\"Separator\",\n            advanced=True,\n            value=\"\\n\",\n            info=\"String that joins all row texts when building the single Text output.\",\n        ),\n    ]\n\n    outputs = [\n        Output(\n            display_name=\"Text\",\n            name=\"text\",\n            info=\"All rows combined into a single text, each row formatted by the template and separated by `sep`.\",\n            method=\"parse_data\",\n        ),\n    ]\n\n    def _clean_args(self):\n        dataframe = self.df\n        template = self.template or \"{text}\"\n        sep = self.sep or \"\\n\"\n        return dataframe, template, sep\n\n    def parse_data(self) -> Message:\n        \"\"\"Converts each row of the DataFrame into a formatted string using the template.\n\n        then joins them with `sep`. Returns a single combined string as a Message.\n        \"\"\"\n        dataframe, template, sep = self._clean_args()\n\n        lines = []\n        # For each row in the DataFrame, build a dict and format\n        for _, row in dataframe.iterrows():\n            row_dict = row.to_dict()\n            text_line = template.format(**row_dict)  # e.g. template=\"{text}\", row_dict={\"text\": \"Hello\"}\n            lines.append(text_line)\n\n        # Join all lines with the provided separator\n        result_string = sep.join(lines)\n        self.status = result_string  # store in self.status for UI logs\n        return Message(text=result_string)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "sep": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sep",
+                "value": "\n",
+                "display_name": "Separator",
+                "advanced": true,
+                "dynamic": false,
+                "info": "String that joins all row texts when building the single Text output.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "template": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "template",
+                "value": "{pdf_url}",
+                "display_name": "Template",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The template for formatting each row. Use placeholders matching column names in the DataFrame, for example '{col1}', '{col2}'.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              }
+            },
+            "description": "Convert a DataFrame into plain text following a specified template. Each column in the DataFrame is treated as a possible template key, e.g. {col_name}.",
+            "icon": "braces",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Parse DataFrame",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text",
+                "display_name": "Text",
+                "method": "parse_data",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "df",
+              "template",
+              "sep"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.1.3"
+          },
+          "showNode": true,
+          "type": "ParseDataFrame",
+          "id": "ParseDataFrame-TAkrR"
+        },
+        "selected": true,
+        "measured": {
+          "width": 320,
+          "height": 334
+        },
+        "dragging": false
+      },
+      {
+        "id": "LoopComponent-i3iR7",
+        "type": "genericNode",
+        "position": {
+          "x": 77.14437922692632,
+          "y": 468.50293012833276
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "data": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "data",
+                "value": "",
+                "display_name": "Data",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "The initial list of Data objects to iterate over.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.custom import Component\nfrom langflow.io import DataInput, Output\nfrom langflow.schema import Data\n\n\nclass LoopComponent(Component):\n    display_name = \"Loop\"\n    description = (\n        \"Iterates over a list of Data objects, outputting one item at a time and aggregating results from loop inputs.\"\n    )\n    icon = \"infinity\"\n\n    inputs = [\n        DataInput(\n            name=\"data\",\n            display_name=\"Data\",\n            info=\"The initial list of Data objects to iterate over.\",\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Item\", name=\"item\", method=\"item_output\", allows_loop=True),\n        Output(display_name=\"Done\", name=\"done\", method=\"done_output\"),\n    ]\n\n    def initialize_data(self) -> None:\n        \"\"\"Initialize the data list, context index, and aggregated list.\"\"\"\n        if self.ctx.get(f\"{self._id}_initialized\", False):\n            return\n\n        # Ensure data is a list of Data objects\n        data_list = self._validate_data(self.data)\n\n        # Store the initial data and context variables\n        self.update_ctx(\n            {\n                f\"{self._id}_data\": data_list,\n                f\"{self._id}_index\": 0,\n                f\"{self._id}_aggregated\": [],\n                f\"{self._id}_initialized\": True,\n            }\n        )\n\n    def _validate_data(self, data):\n        \"\"\"Validate and return a list of Data objects.\"\"\"\n        if isinstance(data, Data):\n            return [data]\n        if isinstance(data, list) and all(isinstance(item, Data) for item in data):\n            return data\n        msg = \"The 'data' input must be a list of Data objects or a single Data object.\"\n        raise TypeError(msg)\n\n    def evaluate_stop_loop(self) -> bool:\n        \"\"\"Evaluate whether to stop item or done output.\"\"\"\n        current_index = self.ctx.get(f\"{self._id}_index\", 0)\n        data_length = len(self.ctx.get(f\"{self._id}_data\", []))\n        return current_index > data_length\n\n    def item_output(self) -> Data:\n        \"\"\"Output the next item in the list or stop if done.\"\"\"\n        self.initialize_data()\n        current_item = Data(text=\"\")\n\n        if self.evaluate_stop_loop():\n            self.stop(\"item\")\n            return Data(text=\"\")\n\n        # Get data list and current index\n        data_list, current_index = self.loop_variables()\n        if current_index < len(data_list):\n            # Output current item and increment index\n            try:\n                current_item = data_list[current_index]\n            except IndexError:\n                current_item = Data(text=\"\")\n        self.aggregated_output()\n        self.update_ctx({f\"{self._id}_index\": current_index + 1})\n        return current_item\n\n    def done_output(self) -> Data:\n        \"\"\"Trigger the done output when iteration is complete.\"\"\"\n        self.initialize_data()\n\n        if self.evaluate_stop_loop():\n            self.stop(\"item\")\n            self.start(\"done\")\n\n            return self.ctx.get(f\"{self._id}_aggregated\", [])\n        self.stop(\"done\")\n        return Data(text=\"\")\n\n    def loop_variables(self):\n        \"\"\"Retrieve loop variables from context.\"\"\"\n        return (\n            self.ctx.get(f\"{self._id}_data\", []),\n            self.ctx.get(f\"{self._id}_index\", 0),\n        )\n\n    def aggregated_output(self) -> Data:\n        \"\"\"Return the aggregated list once all items are processed.\"\"\"\n        self.initialize_data()\n\n        # Get data list and aggregated list\n        data_list = self.ctx.get(f\"{self._id}_data\", [])\n        aggregated = self.ctx.get(f\"{self._id}_aggregated\", [])\n\n        # Check if loop input is provided and append to aggregated list\n        if self.item is not None and not isinstance(self.item, str) and len(aggregated) <= len(data_list):\n            aggregated.append(self.item)\n            self.update_ctx({f\"{self._id}_aggregated\": aggregated})\n        return aggregated\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              }
+            },
+            "description": "Iterates over a list of Data objects, outputting one item at a time and aggregating results from loop inputs.",
+            "icon": "infinity",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Loop",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "item",
+                "display_name": "Item",
+                "method": "item_output",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": true
+              },
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "done",
+                "display_name": "Done",
+                "method": "done_output",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false
+              }
+            ],
+            "field_order": [
+              "data"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "showNode": true,
+          "type": "LoopComponent",
+          "id": "LoopComponent-i3iR7"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 279
+        },
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "source": "ChatInput-KIQmd",
+        "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-KIQmdœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "CustomComponent-dDk1k",
+        "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œCustomComponent-dDk1kœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "CustomComponent-dDk1k",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "ChatInput",
+            "id": "ChatInput-KIQmd",
+            "name": "message",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "xy-edge__ChatInput-KIQmd{œdataTypeœ:œChatInputœ,œidœ:œChatInput-KIQmdœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-CustomComponent-dDk1k{œfieldNameœ:œinput_valueœ,œidœ:œCustomComponent-dDk1kœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "animated": false,
+        "className": ""
+      },
+      {
+        "source": "CustomComponent-dDk1k",
+        "sourceHandle": "{œdataTypeœ:œExtractArticleComponentœ,œidœ:œCustomComponent-dDk1kœ,œnameœ:œoutputœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "ArXivComponent-w5alp",
+        "targetHandle": "{œfieldNameœ:œsearch_queryœ,œidœ:œArXivComponent-w5alpœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "search_query",
+            "id": "ArXivComponent-w5alp",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "ExtractArticleComponent",
+            "id": "CustomComponent-dDk1k",
+            "name": "output",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "xy-edge__CustomComponent-dDk1k{œdataTypeœ:œExtractArticleComponentœ,œidœ:œCustomComponent-dDk1kœ,œnameœ:œoutputœ,œoutput_typesœ:[œMessageœ]}-ArXivComponent-w5alp{œfieldNameœ:œsearch_queryœ,œidœ:œArXivComponent-w5alpœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "animated": false,
+        "className": ""
+      },
+      {
+        "source": "ArXivComponent-w5alp",
+        "sourceHandle": "{œdataTypeœ:œArXivComponentœ,œidœ:œArXivComponent-w5alpœ,œnameœ:œpapersœ,œoutput_typesœ:[œDataœ]}",
+        "target": "MergeDataComponent-sDBaG",
+        "targetHandle": "{œfieldNameœ:œdata_inputsœ,œidœ:œMergeDataComponent-sDBaGœ,œinputTypesœ:[œDataœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "data_inputs",
+            "id": "MergeDataComponent-sDBaG",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "ArXivComponent",
+            "id": "ArXivComponent-w5alp",
+            "name": "papers",
+            "output_types": [
+              "Data"
+            ]
+          }
+        },
+        "id": "xy-edge__ArXivComponent-w5alp{œdataTypeœ:œArXivComponentœ,œidœ:œArXivComponent-w5alpœ,œnameœ:œpapersœ,œoutput_typesœ:[œDataœ]}-MergeDataComponent-sDBaG{œfieldNameœ:œdata_inputsœ,œidœ:œMergeDataComponent-sDBaGœ,œinputTypesœ:[œDataœ],œtypeœ:œotherœ}",
+        "animated": false,
+        "className": ""
+      },
+      {
+        "source": "MergeDataComponent-sDBaG",
+        "sourceHandle": "{œdataTypeœ:œMergeDataComponentœ,œidœ:œMergeDataComponent-sDBaGœ,œnameœ:œcombined_dataœ,œoutput_typesœ:[œDataFrameœ]}",
+        "target": "DataFrameOperationsComponent-n8cp7",
+        "targetHandle": "{œfieldNameœ:œdfœ,œidœ:œDataFrameOperationsComponent-n8cp7œ,œinputTypesœ:[œDataFrameœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "df",
+            "id": "DataFrameOperationsComponent-n8cp7",
+            "inputTypes": [
+              "DataFrame"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "MergeDataComponent",
+            "id": "MergeDataComponent-sDBaG",
+            "name": "combined_data",
+            "output_types": [
+              "DataFrame"
+            ]
+          }
+        },
+        "id": "xy-edge__MergeDataComponent-sDBaG{œdataTypeœ:œMergeDataComponentœ,œidœ:œMergeDataComponent-sDBaGœ,œnameœ:œcombined_dataœ,œoutput_typesœ:[œDataFrameœ]}-DataFrameOperationsComponent-n8cp7{œfieldNameœ:œdfœ,œidœ:œDataFrameOperationsComponent-n8cp7œ,œinputTypesœ:[œDataFrameœ],œtypeœ:œotherœ}",
+        "animated": false,
+        "className": ""
+      },
+      {
+        "source": "DataFrameOperationsComponent-n8cp7",
+        "sourceHandle": "{œdataTypeœ:œDataFrameOperationsComponentœ,œidœ:œDataFrameOperationsComponent-n8cp7œ,œnameœ:œoutputœ,œoutput_typesœ:[œDataFrameœ]}",
+        "target": "ParseDataFrame-TAkrR",
+        "targetHandle": "{œfieldNameœ:œdfœ,œidœ:œParseDataFrame-TAkrRœ,œinputTypesœ:[œDataFrameœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "df",
+            "id": "ParseDataFrame-TAkrR",
+            "inputTypes": [
+              "DataFrame"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "DataFrameOperationsComponent",
+            "id": "DataFrameOperationsComponent-n8cp7",
+            "name": "output",
+            "output_types": [
+              "DataFrame"
+            ]
+          }
+        },
+        "id": "xy-edge__DataFrameOperationsComponent-n8cp7{œdataTypeœ:œDataFrameOperationsComponentœ,œidœ:œDataFrameOperationsComponent-n8cp7œ,œnameœ:œoutputœ,œoutput_typesœ:[œDataFrameœ]}-ParseDataFrame-TAkrR{œfieldNameœ:œdfœ,œidœ:œParseDataFrame-TAkrRœ,œinputTypesœ:[œDataFrameœ],œtypeœ:œotherœ}",
+        "animated": false,
+        "className": ""
+      }
+    ],
+    "viewport": {
+      "x": 39.454669351105736,
+      "y": 52.39772580958106,
+      "zoom": 0.5878746579934481
+    }
+  },
+  "updated_at": "2025-02-24T04:40:47+00:00",
+  "icon": null
+}
