@@ -166,7 +166,7 @@ Which singer won the Record of the Year in 66th Annual Grammy Awards?
 2. 我可能有什麼方法在langflow這個應用中不用手動去網站找論文下載而是透過使用API或者爬蟲方式將論文下載下來，這樣不只省時且可以不占空間
 
 ## 最新更新
-![image]() <br>
+![image](https://github.com/yanyoulin/papers-compare-project-by-langflow/blob/main/langflow_project_pics/%E5%A0%B1%E5%91%8A%E7%89%88%E6%9E%B6%E6%A7%8B.png) <br>
 最終報告之成果圖(2024/12/23) <br>
 [報告Canva ppt連結](https://www.canva.com/design/DAGZ1mR5Bwk/sOjeuCkvebvJMkOiYj5c8w/view?utm_content=DAGZ1mR5Bwk&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h7218b41ca3) <br>
 已解決以下問題：<br>
@@ -176,12 +176,12 @@ Which singer won the Record of the Year in 66th Annual Grammy Awards?
 - 可限制論文發行時間
 
 架構圖：<br>
-![image]() <br>
+![image](https://github.com/yanyoulin/papers-compare-project-by-langflow/blob/main/langflow_project_pics/%E5%A0%B1%E5%91%8A%E7%89%88%E6%9E%B6%E6%A7%8B%E5%88%86%E9%A1%9E.png) <br>
 
 ### Get papers' keyword and date
 寒假更新(2025/01)改為直接提取文字而非使用AI分析<br>
 結果相同<br>
-![image]() <br>
+![image](https://github.com/yanyoulin/papers-compare-project-by-langflow/blob/main/langflow_project_pics/%E6%96%B0%E7%89%88%E6%8A%93%E5%8F%96%E8%B3%87%E8%A8%8A.png) <br>
 ```python
 class CustomComponent(Component):
     display_name = "Extract Article Component"
