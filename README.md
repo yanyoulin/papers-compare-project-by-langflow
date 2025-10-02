@@ -1,6 +1,7 @@
 # Papers-compare-project-by-langflow
 這次要做的是使用langflow作一個論文回覆聊天機器人，找尋不同的論文，當使用者輸入想要找的論文主題並且說明他想執行的動作 ex.比較論文書寫方式、對專有名詞的解釋差異 <br>
-[最新更新 2024/12](#最新更新)
+[最新更新 2024/12](#最新更新) <br>
+2024/10/29~2024/11/12的圖檔在GitLab轉GitHub時遺失
 ## 簡單的pdf回答機器人
 ![image](https://github.com/yanyoulin/papers-compare-project-by-langflow/blob/main/langflow_project_pics/simple_pdf.png)
 上面的例子是一個簡單的pdf答覆聊天機器人，我們將有關一家店的所有資訊使用file以data形式output接到split text讓data轉成text chuncks. <br>
@@ -164,6 +165,353 @@ Which singer won the Record of the Year in 66th Annual Grammy Awards?
 ## 10/8問題
 1. 在version1中，我可能有什麼方法讓model同時輸出pdf的位置、標題及文章所有內容，且文章不只一個
 2. 我可能有什麼方法在langflow這個應用中不用手動去網站找論文下載而是透過使用API或者爬蟲方式將論文下載下來，這樣不只省時且可以不占空間
+
+## 2024/10/29
+### 進度
+解決上次提出的問題，使用論文網站arXiv，成功爬蟲讀取論文PDF，而非手動<br>
+架構圖:<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241029/ver_2.png?ref_type=heads&inline=false)<br>
+
+架構:<br>
+`使用者輸入` -> `兩個prompt將輸入拆成 article & task` -> `將article丟入Custom Component進行爬蟲` -> `將pdf解析出來(不需下載)` -> `下prompt讓OpenAI對這些papers執行任務` -> `輸出(完成任務)`
+
+### 實際執行
+#### 選擇arXiv做為爬蟲對象
+原本:臺灣博碩士論文知識加值系統<br>
+缺點:需登入會員並且無法瀏覽pdf<br>
+目前:使用arXiv<br>
+優點:內容豐富、可瀏覽pdf、html、無須下載<br>
+
+#### 找到論文的內容並解析
+這次對上版本最大的更新就是自動爬蟲讀取pdf，解決上次需手動下載的問題<br>
+使用Custom Component:<br>
+```python
+# from langflow.field_typing import Data
+from langflow.custom import Component
+from langflow.io import MessageTextInput, Output
+from langflow.schema import Data
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
+import time
+
+class CustomComponent(Component):
+    display_name = "Custom Component"
+    description = "Use as a template to create your own component."
+    documentation: str = "http://docs.langflow.org/components/custom"
+    icon = "custom_components"
+    name = "Custom_Component"
+
+    inputs = [
+        MessageTextInput(name="input_value", display_name="Input Value", value="Hello, World!"),
+    ]
+
+    outputs = [
+        Output(display_name="Output", name="output", method="build_output"),
+    ]
+
+
+    def build_output(self) -> Data:
+        browser = webdriver.Firefox()
+        browser.get('https://arxiv.org/')
+        
+        #/html/body/div/header/div[2]/div[2]/form/div/div[1]/input為search box的XPATH
+        browser.find_element(By.XPATH, "/html/body/div/header/div[2]/div[2]/form/div/div[1]/input").send_keys(self.input_value + Keys.ENTER)
+        #搜尋
+        driver_wait = WebDriverWait(browser, 20, 0.5) #等待網站載入
+        time.sleep(2) #第二種等待方法
+        links = browser.find_elements(By.PARTIAL_LINK_TEXT, "2410") #找到有關"2410"的連結
+        links[i].click() #點擊第i個連結
+        time.sleep(2)
+        browser.find_element(By.ID, "latexml-download-link").click() #點擊html連結
+        
+        # 網頁原始碼
+        html = browser.page_source
+        
+        # BeautifulSoup4 解析
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        data = Data(value=soup.text)
+        self.status = data
+        browser.quit()
+        return data
+```
+由於是第一次接觸爬蟲，上網查詢資料以及實作理解花了一些時間<br>
+參考資料:<br>
+[NLP - 用Selenium爬蟲『博碩士論文加值系統』](https://hackmd.io/@bessyhuang/H1dgAM3OI)<br>
+[Selenium模組](https://utrustcorp.com/python-selenium/)<br>
+[以網路爬蟲角度解析HTML基本概念](https://medium.com/%E8%AA%A4%E9%97%96%E6%95%B8%E6%93%9A%E5%8F%A2%E6%9E%97%E7%9A%84%E5%95%86%E7%AE%A1%E4%BA%BAzino/%E4%BB%A5%E7%88%AC%E8%9F%B2%E8%A7%92%E5%BA%A6%E8%A7%A3%E6%9E%90%E6%9C%80%E5%9F%BA%E6%9C%AChtml%E6%A6%82%E5%BF%B5-147096a118d8)<br>
+
+1. 首先，到arXiv網站`browser.get('https://arxiv.org/')`
+2. 找到搜索的地方，可以用By.ID、CLASS_NAME等，我這邊用XPATH比較直觀一點<br>
+`browser.find_element(By.XPATH, "/html/body/div/header/div[2]/div[2]/form/div/div[1]/input")` <br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241029/is-small_search.png?ref_type=heads&inline=false)
+3. 查詢使用者想要的主題`send_keys(self.input_value + Keys.ENTER)`
+4. 使用By.PARTIAL_LINK_TEXT找出可以查看論文詳細資訊的連結<br>
+`links = browser.find_elements(By.PARTIAL_LINK_TEXT, "2410")`<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241029/arXiv2410.png?ref_type=heads&inline=false)
+5. 點擊HTML`browser.find_element(By.ID, "latexml-download-link").click()`<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241029/pdf_html.png?ref_type=heads&inline=false)
+6. 用`soup = BeautifulSoup(html, 'html.parser')`解析html<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241029/paper_pdf.png?ref_type=heads&inline=false)
+7. 將Component輸出出來的data轉成text，再經由負責整理的Custom Component整理
+```python
+def build_output(self) -> Text:
+        article = self.input_value.replace('\\n', '').replace('\\r', '').replace('\\', '')
+        self.status = article
+        return Text(article)
+```
+<br>
+
+#### 下Final Job prompt給OpenAI完成工作
+```
+There are some articles and the task that user requests.
+Please "compare" these articles and finish the task.
+
+This is the article_1 : {a1}
+This is the article_2 : {a2}
+This is the article_3 : {a3}
+
+And finally, this is the task : {task}
+```
+<br>
+實際演示<br>
+
+### 小結論與心得
+這次進度我解決上次提出的兩個問題，一是將載入pdf這動作自動化，二是透過prompt，移除掉vector db，傳給OpenAI model，它可以準確知道論文的標題以及取出論文中我們想要的部分了，回答也是我們最終目標想要看到的樣子了<br>
+我學到基礎的爬蟲，從中學習基本的html架構<br>
+| **html** | 意義       |  
+|-------------------------|------------| 
+| **&lt;h&gt;&lt;/h&gt;** | 標題       |   
+| **&lt;ul&gt;&lt;/ul&gt;** | 無序清單    |  
+| **&lt;ol&gt;&lt;/ol&gt;** | 有序清單    |  
+| **&lt;li&gt;&lt;/li&gt;** | 清單       | 
+| **&lt;p&gt;&lt;/p&gt;** | 段落文字    |  
+| **&lt;table&gt;&lt;/table&gt;** | 表格       | 
+| **&lt;div&gt;&lt;/div&gt;** | 分隔       |  
+| **&lt;a&gt;&lt;/a&gt;** | 連結       |  
+| **class** | 類別       |  
+| **src** | 外部媒體來源       |  
+| **herf** | 外部連結       |  
+
+| **Code** | 屬性       |  
+|-------------------------|------------| 
+| **By.CLASS_NAME** | class 指定標籤的類別名稱      |  
+| **By.ID** | id 指定標籤的唯一識別      |  
+| **By.NAME** | name 指定標籤名稱      |  
+| **By.PARTIAL_LINK_TEXT** | 部分連結文字       | 
+| **By.XPATH** | 定位位置        | 
+<br>
+現在的輸出已經是我預期的樣子了，但可以再更優化，像是除了從網站爬下來的資料，也可以配合本地端的database<br>
+再來就是配合vector db使它更優化<br>
+
+### 未來展望
+1. 研究vector db，使用在這個project中
+2. 試著也讀取pdf中的圖片
+3. 把架構規模設更大，但會遇到電腦開過多網站卡頓以及OpenAI輸入字數限制
+4. 除了當次執行找的論文，也可以配合之前找過的做對比
+
+### 問題
+1. 如何避免OpenAI輸入字數上限
+2. vector db真的能優化project嗎(未來研究方向，搞清楚背後運作模式)
+
+## 2024/11/12
+### 進度
+解決上次同時進行多個爬蟲導致卡頓無法順利讀取的問題，以及透過預先統整論文資訊使OpenAI可以處理多個論文且不容易達到輸入字數上限<br>
+嘗試新增進階搜索(加入日期)<br>
+架構圖:<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/project.png?ref_type=heads&inline=false)<br>
+
+架構:<br>
+`使用者輸入` -> `三個prompt將輸入拆成 article & task & date` -> `將article和date丟入Custom Component進行爬蟲` -> `將pdf解析出來(不需下載)` -> `先對單一論文使用OpenAI針對問題做整理` -> `下prompt讓OpenAI對這些papers執行任務` -> `輸出(完成任務)`
+
+### 實際執行
+#### 避免同時爬蟲
+讓每個爬蟲的component在爬蟲前多一段等待時間，以第一篇0秒、第二篇等20秒以此類推，來避免卡死的情況，這是我想到最直觀的方法<br>
+```python
+class CustomComponent(Component):
+    display_name = "Custom Component"
+    description = "Use as a template to create your own component."
+    documentation: str = "http://docs.langflow.org/components/custom"
+    icon = "custom_components"
+    name = "CustomComponent"
+
+    inputs = [
+        MessageTextInput(name="input_value", display_name="Input Value", value="Hello, World!"),
+    ]
+
+    outputs = [
+        Output(display_name="Output", name="output", method="build_output"),
+    ]
+
+
+    def build_output(self) -> Data:
+        time.sleep(20) //0->20->40->60->80
+        browser = webdriver.Firefox()
+        browser.get('https://arxiv.org')
+        browser.find_element(By.XPATH, "/html/body/div/header/div[2]/div[2]/form/div/div[1]/input").send_keys(self.input_value + Keys.ENTER)
+        
+        driver_wait = WebDriverWait(browser, 20, 0.5)
+        time.sleep(2)
+        links = browser.find_elements(By.PARTIAL_LINK_TEXT, "arXiv:")
+        links[2].click()
+        time.sleep(2)
+        browser.find_element(By.ID, "latexml-download-link").click()
+        
+        html = browser.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        data = Data(value=soup.text)
+        self.status = data
+        browser.quit()
+        return data
+```
+#### 避免達到文字限制、增加可比較論文數量
+多新增一層prompt來處理，讓OpenAI先對單一論文做最終任務的事前整理<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/article_summarize.png?ref_type=heads&inline=false)<br>
+prompt:
+```
+You will get a paper and a task.
+But the task is not for one paper.
+You should understand the task and summerize the main point of the paper to help next model to finish the task.
+Here is the task: {task}
+and here is the paper: {paper}
+```
+這樣就可以事先對論文做任務，最後在交給final的OpenAI做處理<br>
+
+#### 新增進階發布時間搜尋
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/new_date.png?ref_type=heads&inline=false)<br>
+我讓搜尋論文現在可以選取發布時間，讓找到的論文多樣性可以增加，不會每次搜索都找到一樣的論文
+NEW_input:
+```
+Article [Zero Shot], Date[], Do [the definition of zero shot in different papers]
+```
+<br>
+
+NEW_Date_prompt:
+```
+Get the article published date from his/her question and seperate "from" and "to" date with "," .
+And if the date is empty, just return a comma ",".
+
+This is user's question: {question}
+
+User's input has a format and it will be: Article [the article or the key word that the user want], Date [from YYYY-MM to YYYY-MM], Do [the thing that the user want to do]
+
+There's some examples:
+1.
+user: Article [computer science], Date [from 2021-10 to 2024-10], Do [list some different writing ways between some papers]
+output: 2021-10,2024-10
+
+2.
+user: Article: [A.I.], Date [from 2014-05 to 2023-11], Do [compare papers' main point]
+output: 2014-05,2023-11
+
+3.
+user: Article [LLM Agent], Date [], Do [the definition of RAG in different papers]
+output: ,
+```  
+
+<br>
+NEW_custom_component:
+
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/new_custom_component.png?ref_type=heads&inline=false)<br>
+
+### 遇到問題
+不是每篇論文都有html檔可以爬<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/no_html_paper.png?ref_type=heads&inline=false)<br>
+執行時會跳出error<br>
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/no_html_error.png?ref_type=heads&inline=false)<br>
+需要再做研究，因為只有比較新的論文有提供html檔，舊的論文沒有這個功能，但所有論文都有提供PDF預覽
+
+### 更新進度(2024/11/11)
+已解決上述遇到問題，已經可以讀取網路上的預覽pdf文字了<br>
+移除simplify的custom component，更新爬蟲的程式碼<br>
+新架構圖:
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/new_ver_project.png?ref_type=heads&inline=false)<br>
+### 更新實際執行(2024/11/11)
+更新article爬蟲的custom component使他可以直接讀pdf而不是html檔，解決不是每個論文都有html檔可以讀的問題<br>
+```python
+# from langflow.field_typing import Data
+from langflow.custom import Component
+from langflow.io import MessageTextInput, Output
+from langflow.schema import Data
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
+import time
+import requests
+import fitz
+
+class CustomComponent(Component):
+    display_name = "Custom Component"
+    description = "Use as a template to create your own component."
+    documentation: str = "http://docs.langflow.org/components/custom"
+    icon = "custom_components"
+    name = "Custom_Component"
+
+    inputs = [
+        MessageTextInput(name="article", display_name="Article", value="Hello, World!"),
+        MessageTextInput(name="date", display_name="Date", value="Hello, World!"),
+    ]
+
+    outputs = [
+        Output(display_name="Output", name="output", method="build_output"),
+    ]
+
+
+    def build_output(self) -> Data:
+        time.sleep(20)
+        browser = webdriver.Firefox()
+        browser.get('https://arxiv.org/search/advanced')
+        D = self.date.split(",")
+        
+        if D[0]!="" and D[1]!="":
+            browser.find_element(By.ID, "date-filter_by-3").click()
+            browser.find_element(By.ID, "date-from_date").send_keys(D[0])
+            browser.find_element(By.ID, "date-to_date").send_keys(D[1])
+        else:
+            browser.find_element(By.ID, "date-filter_by-0").click()
+        
+        browser.find_element(By.ID, "terms-0-term").send_keys(self.article + Keys.ENTER)
+        
+        driver_wait = WebDriverWait(browser, 20, 0.5)
+        time.sleep(2)
+        links = browser.find_elements(By.PARTIAL_LINK_TEXT, "arXiv:")
+        links[1].click()
+        time.sleep(2)
+        browser.find_element(By.XPATH, "/html/body/div[2]/main/div/div/div[2]/div[1]/ul/li[1]/a").click()
+        pdf_url = browser.current_url
+        response = requests.get(pdf_url)
+        pdf_data = response.content
+        
+        text_content = ""
+        with fitz.open(stream=pdf_data, filetype="pdf") as pdf_document:
+            for page_num in range(pdf_document.page_count):
+                page = pdf_document[page_num]
+                text_content += page.get_text()
+        
+        data = Data(value=text_content)
+        self.status = data
+        browser.quit()
+        return data
+```
+取得PDF:
+![image](https://gitlab.myllm.tw/project_student_app/papers-compare-project-by-langflow/-/raw/main/pics/20241112/get_pdf.png?ref_type=heads&inline=false)<br>
+
+#### 實際演示
+
+### 未來展望
+1. ~~讀取預覽的PDF~~
+2. 增加更多進階搜尋
+3. 試著也讀取pdf中的圖片
+### 問題
+未來解決讀取PDF之後，我還能做甚麼更新?
 
 ## 最新更新
 ![image](https://github.com/yanyoulin/papers-compare-project-by-langflow/blob/main/langflow_project_pics/%E5%A0%B1%E5%91%8A%E7%89%88%E6%9E%B6%E6%A7%8B.png) <br>
